@@ -1,0 +1,15 @@
+{
+  "name": "domen-mail",
+  "version": "1.0.0",
+  "description": "Simple IMAP mail viewer for @knigavl.ru domain",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "imap": "^0.8.19",
+    "mailparser": "^3.6.5",
+    "dotenv": "^16.3.1"
+  }
+}
