@@ -1,9 +1,10 @@
+# Без секции build — Portainer только делает pull (иначе срабатывает баг buildx/http2).
+# Образ: GitHub Actions → ghcr.io/sereza111/domen_mail
+# Локально собрать: docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+
 services:
   domen-mail:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: ${DOCKER_IMAGE:-domen-mail:1.0.0}
+    image: ${DOCKER_IMAGE:-ghcr.io/sereza111/domen_mail:latest}
     container_name: domen-mail
     restart: unless-stopped
     ports:

@@ -1,0 +1,8 @@
+# Локальная сборка: docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+
+services:
+  domen-mail:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: domen-mail:local
