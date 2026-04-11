@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Mail - Почтовый клиент</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'EB Garamond', 'Cormorant Garamond', serif;
+            background: linear-gradient(135deg, #050505 0%, #0b0b0b 50%, #070707 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            color: #e6e6e6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Готический фон с узорами */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.03) 4px),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.03) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(15, 15, 15, 0.95) 100%);
+            border: 2px solid #2e2e2e;
+            padding: 40px;
+            box-shadow:
+                0 0 60px rgba(0, 0, 0, 0.9),
+                inset 0 0 30px rgba(255, 255, 255, 0.04),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Готические углы */
+        .container::before {
+            content: '✠';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            font-size: 24px;
+            color: #5a5a5a;
+        }
+
+        .container::after {
+            content: '✠';
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            font-size: 24px;
+            color: #5a5a5a;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 5px;
+            font-size: 2.5em;
+            font-family: 'UnifrakturMaguntia', 'Cinzel', serif;
+            font-weight: 400;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.08);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3a3a3a, transparent);
+            margin: 20px 0;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.08);
+        }
+
+        /* Login Box */
+        .login-box {
+            background: rgba(18, 18, 18, 0.8);
+            padding: 30px;
+            border: 1px solid #333333;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.04);
+            margin-bottom: 25px;
+        }
+
+        .login-box h2 {
+            font-family: 'Cinzel', serif;
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #a0a0a0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #3a3a3a;
+            background: rgba(15, 15, 15, 0.9);
+            color: #e8e8e8;
+            font-family: 'EB Garamond', serif;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input::placeholder {
+            color: #606060;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #5a5a5a;
+            background: rgba(18, 18, 18, 0.95);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.08), inset 0 0 5px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #1e1e1e 0%, #141414 100%);
+            color: #ffffff;
+            border: 1px solid #5a5a5a;
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2a2a2a, #1b1b1b);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.08), inset 0 0 10px rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            color: #707070;
+            font-size: 13px;
+            margin-top: 15px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Error */
+        .error {
+            background: rgba(60, 0, 0, 0.4);
+            color: #ff9999;
+            padding: 15px 20px;
+            border: 1px solid #6a0000;
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0a0a0;
+            font-size: 18px;
+            font-style: italic;
+        }
+
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Messages Container */
+        .messages-container {
+            background: rgba(18, 18, 18, 0.6);
+            border: 1px solid #333333;
+        }
+
+        .messages-header {
+            background: linear-gradient(135deg, rgba(22, 22, 22, 0.9) 0%, rgba(18, 18, 18, 0.9) 100%);
+            padding: 20px 25px;
+            border-bottom: 1px solid #333333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .messages-header h2 {
+            font-family: 'Cinzel', serif;
+            color: #ffffff;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            padding: 10px 18px;
+            border: 1px solid #3a3a3a;
+            background: rgba(15, 15, 15, 0.7);
+            color: #b0b0b0;
+            font-family: 'EB Garamond', serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #5a5a5a;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #222222 0%, #171717 100%);
+            color: #ffffff;
+            border-color: #5a5a5a;
+        }
+
+        /* Messages Table */
+        .messages-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .messages-table thead {
+            background: rgba(20, 20, 20, 0.8);
+        }
+
+        .messages-table th {
+            text-align: left;
+            padding: 15px 20px;
+            font-weight: 600;
+            color: #a0a0a0;
+            border-bottom: 1px solid #333333;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Cinzel', serif;
+        }
+
+        .messages-table td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #2a2a2a;
+            vertical-align: top;
+            color: #e0e0e0;
+        }
+
+        .messages-table tr {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .messages-table tbody tr:hover {
+            background: rgba(30, 30, 30, 0.6);
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.04);
+        }
+
+        .from-cell {
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .subject-cell {
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .snippet-cell {
+            color: #909090;
+            font-size: 14px;
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .date-cell {
+            white-space: nowrap;
+            color: #808080;
+            font-size: 14px;
+        }
+
+        .no-messages {
+            text-align: center;
+            padding: 60px 20px;
+            color: #707070;
+        }
+
+        .no-messages-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Ornament */
+        .ornament {
+            text-align: center;
+            color: #3a3a3a;
+            font-size: 18px;
+            margin: 25px 0;
+            letter-spacing: 8px;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 900px;
+            max-width: 100%;
+            max-height: 90vh;
+            background: linear-gradient(135deg, #111111 0%, #0a0a0a 100%);
+            border: 2px solid #3a3a3a;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #333333;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            background: rgba(18, 18, 18, 0.8);
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            color: #ffffff;
+            font-size: 1.2em;
+            flex: 1;
+        }
+
+        .modal-meta {
+            color: #909090;
+            font-size: 13px;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .modal-meta strong {
+            color: #b0b0b0;
+        }
+
+        .modal-close {
+            padding: 8px 16px;
+            border: 1px solid #3a3a3a;
+            background: rgba(20, 20, 20, 0.9);
+            color: #b0b0b0;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(60, 0, 0, 0.6);
+            border-color: #6a0000;
+            color: #ffffff;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            padding: 25px;
+            background: rgba(12, 12, 12, 0.9);
+        }
+
+        .message-content {
+            color: #e0e0e0;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .message-content a {
+            color: #9090ff;
+        }
+
+        .message-html-content {
+            background: #ffffff;
+            color: #333333;
+            padding: 25px;
+            border: 1px solid #2a2a2a;
+            line-height: 1.6;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .message-html-content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .message-html-content a {
+            color: #0066cc;
+        }
+
+        .message-html-content table {
+            border-collapse: collapse;
+            max-width: 100%;
+        }
+
+        .attachments-list {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .attachments-title {
+            color: #a0a0a0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .attachment-item {
+            display: inline-block;
+            padding: 8px 14px;
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid #333333;
+            color: #c0c0c0;
+            font-size: 13px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .modal-loading {
+            text-align: center;
+            padding: 60px;
+            color: #808080;
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .messages-table, .messages-table thead, .messages-table tbody, 
+            .messages-table th, .messages-table td, .messages-table tr {
+                display: block;
+            }
+
+            .messages-table thead {
+                display: none;
+            }
+
+            .messages-table tr {
+                margin-bottom: 15px;
+                border: 1px solid #333333;
+                padding: 15px;
+            }
+
+            .messages-table td {
+                border: none;
+                padding: 5px 0;
+            }
+
+            .messages-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #808080;
+                display: block;
+                font-size: 11px;
+                text-transform: uppercase;
+                margin-bottom: 3px;
+                letter-spacing: 1px;
+            }
+
+            .from-cell, .snippet-cell {
+                max-width: none;
+                white-space: normal;
+            }
+
+            .messages-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚜ Почта ⚜</h1>
+        <p class="subtitle">Почтовый портал</p>
+        <div class="divider"></div>
+
+        <div id="loginContainer" class="login-box">
+            <h2>✠ Вход в почтовый ящик</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="emailInput">Email</label>
+                    <input 
+                        type="email" 
+                        id="emailInput" 
+                    placeholder="user@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="passwordInput">Пароль</label>
+                    <input 
+                        type="password" 
+                        id="passwordInput" 
+                        placeholder="Пароль от почтового ящика"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+                <button type="submit" id="submitBtn" class="btn-primary">⚔ Войти</button>
+            </form>
+            <p class="hint">Введите данные от вашего почтового ящика</p>
+        </div>
+
+        <div id="errorContainer"></div>
+        <div id="loadingContainer"></div>
+        <div id="messagesContainer"></div>
+
+        <div class="ornament">✠ ✠ ✠</div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="modalSubject">Тема письма</div>
+                    <div class="modal-meta" id="modalMeta"></div>
+                </div>
+                <button class="modal-close" id="modalClose">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="modal-loading">Загрузка письма...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginContainer = document.getElementById('loginContainer');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorContainer = document.getElementById('errorContainer');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const messagesContainer = document.getElementById('messagesContainer');
+
+        // Modal elements
+        const messageModal = document.getElementById('messageModal');
+        const modalSubject = document.getElementById('modalSubject');
+        const modalMeta = document.getElementById('modalMeta');
+        const modalBody = document.getElementById('modalBody');
+        const modalClose = document.getElementById('modalClose');
+
+        // Store credentials for refresh
+        let currentEmail = '';
+        let currentPassword = '';
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            
+            // Validate email format
+            if (!email.includes('@') || !email.includes('.')) {
+                showError('Пожалуйста, введите корректный email адрес');
+                return;
+            }
+
+            if (!password) {
+                showError('Введите пароль');
+                return;
+            }
+
+            currentEmail = email;
+            currentPassword = password;
+
+            await loadMessages();
+        });
+
+        // Modal close handlers
+        modalClose.addEventListener('click', closeModal);
+        messageModal.addEventListener('click', (e) => {
+            if (e.target === messageModal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && messageModal.classList.contains('show')) {
+                closeModal();
+            }
+        });
+
+        function closeModal() {
+            messageModal.classList.remove('show');
+            messageModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        async function openMessage(seqno) {
+            messageModal.classList.add('show');
+            messageModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            
+            modalSubject.textContent = 'Загрузка...';
+            modalMeta.innerHTML = '';
+            modalBody.innerHTML = '<div class="modal-loading">Загрузка письма...</div>';
+
+            try {
+                const response = await fetch(`/api/message/${seqno}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: currentEmail,
+                        password: currentPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Ошибка при загрузке письма');
+                }
+
+                const msg = data.message;
+                
+                modalSubject.textContent = msg.subject || '(Без темы)';
+                modalMeta.innerHTML = `
+                    <div><strong>От:</strong> ${escapeHtml(msg.from || 'Неизвестно')}</div>
+                    <div><strong>Кому:</strong> ${escapeHtml(msg.to || '')}</div>
+                    <div><strong>Дата:</strong> ${formatDate(msg.date)}</div>
+                `;
+
+                let contentHtml = '';
+                
+                // Prefer HTML content, fallback to text
+                if (msg.html) {
+                    // Sanitize and display HTML content
+                    const sanitizedHtml = sanitizeHtml(msg.html);
+                    contentHtml = `<div class="message-html-content">${sanitizedHtml}</div>`;
+                } else if (msg.text) {
+                    contentHtml = `<div class="message-content"><pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(msg.text)}</pre></div>`;
+                } else {
+                    contentHtml = '<div class="message-content" style="color: #808080; font-style: italic;">(Нет содержимого)</div>';
+                }
+
+                // Add attachments if any
+                if (msg.attachments && msg.attachments.length > 0) {
+                    contentHtml += `
+                        <div class="attachments-list">
+                            <div class="attachments-title">📎 Вложения (${msg.attachments.length})</div>
+                            ${msg.attachments.map(att => `
+                                <span class="attachment-item">
+                                    ${escapeHtml(att.filename)} 
+                                    <span style="color: #606060;">(${formatSize(att.size)})</span>
+                                </span>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                modalBody.innerHTML = contentHtml;
+
+            } catch (error) {
+                modalBody.innerHTML = `<div class="error">⚠️ ${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        async function loadMessages() {
+            // Clear previous results
+            errorContainer.innerHTML = '';
+            messagesContainer.innerHTML = '';
+            
+            // Show loading
+            loadingContainer.innerHTML = '<div class="loading">Подключение к почтовому серверу</div>';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Загрузка...';
+
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: currentEmail,
+                        password: currentPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Ошибка при загрузке сообщений');
+                }
+
+                // Hide login form, show messages
+                loginContainer.style.display = 'none';
+                displayMessages(data.messages, currentEmail);
+
+            } catch (error) {
+                showError(error.message);
+                // Clear stored password on auth error
+                if (error.message.includes('Неверный') || error.message.includes('пароль')) {
+                    currentPassword = '';
+                }
+            } finally {
+                loadingContainer.innerHTML = '';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '⚔ Войти';
+            }
+        }
+
+        function logout() {
+            currentEmail = '';
+            currentPassword = '';
+            emailInput.value = '';
+            passwordInput.value = '';
+            messagesContainer.innerHTML = '';
+            errorContainer.innerHTML = '';
+            loginContainer.style.display = 'block';
+        }
+
+        async function refresh() {
+            if (!currentEmail || !currentPassword) {
+                logout();
+                return;
+            }
+            await loadMessages();
+        }
+
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">⚠️ ${escapeHtml(message)}</div>`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch {
+                return dateStr;
+            }
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let i = 0;
+            while (bytes >= 1024 && i < units.length - 1) {
+                bytes /= 1024;
+                i++;
+            }
+            return bytes.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+        }
+
+        function sanitizeHtml(html) {
+            // Remove dangerous elements and attributes
+            let clean = html
+                // Remove script tags and content
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                // Remove onclick, onerror, onload and other event handlers
+                .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+                .replace(/\s+on\w+\s*=\s*[^\s>]+/gi, '')
+                // Remove javascript: links
+                .replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"')
+                // Remove style tags (can contain expressions)
+                .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+            
+            return clean;
+        }
+
+        function displayMessages(messages, email) {
+            if (!messages || messages.length === 0) {
+                messagesContainer.innerHTML = `
+                    <div class="messages-container">
+                        <div class="messages-header">
+                            <h2>📬 ${escapeHtml(email)}</h2>
+                            <div class="header-buttons">
+                                <button class="btn-secondary btn-accent" onclick="refresh()">⟳ Обновить</button>
+                                <button class="btn-secondary" onclick="logout()">Выйти</button>
+                            </div>
+                        </div>
+                        <div class="no-messages">
+                            <div class="no-messages-icon">📜</div>
+                            <p>Входящие письма не найдены</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="messages-container">
+                    <div class="messages-header">
+                        <h2>📬 ${escapeHtml(email)} (${messages.length} писем)</h2>
+                        <div class="header-buttons">
+                            <button class="btn-secondary btn-accent" onclick="refresh()">⟳ Обновить</button>
+                            <button class="btn-secondary" onclick="logout()">Выйти</button>
+                        </div>
+                    </div>
+                    <table class="messages-table">
+                        <thead>
+                            <tr>
+                                <th>От кого</th>
+                                <th>Тема</th>
+                                <th>Содержимое</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            for (const msg of messages) {
+                html += `
+                    <tr onclick="openMessage(${msg.seqno})">
+                        <td class="from-cell" data-label="От кого" title="${escapeHtml(msg.from || '')}">${escapeHtml(msg.from || 'Неизвестно')}</td>
+                        <td class="subject-cell" data-label="Тема">${escapeHtml(msg.subject || '(Без темы)')}</td>
+                        <td class="snippet-cell" data-label="Содержимое">${escapeHtml(msg.snippet || '')}</td>
+                        <td class="date-cell" data-label="Дата">${formatDate(msg.date)}</td>
+                    </tr>
+                `;
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            messagesContainer.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
