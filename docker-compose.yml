@@ -7,8 +7,9 @@ services:
     image: ${DOCKER_IMAGE:-ghcr.io/sereza111/domen_mail:latest}
     container_name: domen-mail
     restart: unless-stopped
+    # Снаружи хоста: задайте HOST_PORT в Portainer, если 3000 занят (например 3001 или 8080).
     ports:
-      - "${PORT:-3000}:3000"
+      - "${HOST_PORT:-3000}:3000"
     environment:
       PORT: "3000"
       IMAP_HOST: ${IMAP_HOST:-imap.beget.com}
