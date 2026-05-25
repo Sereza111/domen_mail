@@ -1,4 +1,4 @@
-# Без секции build — Portainer только делает pull (иначе срабатывает баг buildx/http2).
+# Без секции build — Portainer только делает pull
 # Образ: GitHub Actions → ghcr.io/sereza111/domen_mail
 
 services:
@@ -7,10 +7,10 @@ services:
     container_name: domen-mail
     restart: unless-stopped
 
-    # Порт снаружи хоста — 3002 (3000 часто занят Portainer и другими сервисами)
-    # Если нужно изменить — поменяй первое число (3002)
+    # Порт снаружи хоста — 3003 (3002 занят первым сервисом)
+    # Если нужно изменить — поменяй первое число
     ports:
-      - "3002:3000"        # ← Захардкожено, чтобы Portainer не падал
+      - "3003:3000"          # ← Изменили на 3003
 
     environment:
       PORT: "3000"
