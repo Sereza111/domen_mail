@@ -1,16 +1,17 @@
 # Без секции build — Portainer только делает pull (иначе срабатывает баг buildx/http2).
 # Образ: GitHub Actions → ghcr.io/sereza111/domen_mail
-# Локально собрать: docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
 
 services:
   domen-mail:
     image: ${DOCKER_IMAGE:-ghcr.io/sereza111/domen_mail:latest}
     container_name: domen-mail
     restart: unless-stopped
-    # Снаружи хоста по умолчанию 3001 (3000 часто занят Portainer/другими сервисами).
-    # Другой порт: в стеке задайте HOST_PORT=3002 и т.д.
+
+    # Порт снаружи хоста — 3002 (3000 часто занят Portainer и другими сервисами)
+    # Если нужно изменить — поменяй первое число (3002)
     ports:
-      - "${HOST_PORT:-3002}:3000"
+      - "3002:3000"        # ← Захардкожено, чтобы Portainer не падал
+
     environment:
       PORT: "3000"
       IMAP_HOST: ${IMAP_HOST:-imap.beget.com}
