@@ -10,7 +10,7 @@ services:
     # Снаружи хоста по умолчанию 3001 (3000 часто занят Portainer/другими сервисами).
     # Другой порт: в стеке задайте HOST_PORT=3002 и т.д.
     ports:
-      - "${HOST_PORT:-3001}:3000"
+      - "${HOST_PORT:-3002}:3000"
     environment:
       PORT: "3000"
       IMAP_HOST: ${IMAP_HOST:-imap.beget.com}
