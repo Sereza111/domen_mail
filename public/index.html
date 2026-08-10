@@ -630,6 +630,17 @@
         const emailInput = document.getElementById('emailInput');
         const passwordInput = document.getElementById('passwordInput');
         const submitBtn = document.getElementById('submitBtn');
+
+        emailInput.addEventListener('paste', (event) => {
+            const pastedText = event.clipboardData?.getData('text/plain').trim();
+            const separatorIndex = pastedText?.indexOf(':') ?? -1;
+
+            if (separatorIndex <= 0) return;
+
+            event.preventDefault();
+            emailInput.value = pastedText.slice(0, separatorIndex).trim();
+            passwordInput.value = pastedText.slice(separatorIndex + 1);
+        });
         const errorContainer = document.getElementById('errorContainer');
         const loadingContainer = document.getElementById('loadingContainer');
         const messagesContainer = document.getElementById('messagesContainer');
