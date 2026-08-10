@@ -631,15 +631,31 @@
         const passwordInput = document.getElementById('passwordInput');
         const submitBtn = document.getElementById('submitBtn');
 
+        function fillCredentials(combinedValue) {
+            const separatorIndex = combinedValue.indexOf(':');
+
+            if (separatorIndex <= 0) return false;
+
+            emailInput.value = combinedValue.slice(0, separatorIndex).trim();
+            passwordInput.value = combinedValue.slice(separatorIndex + 1);
+            passwordInput.focus();
+            return true;
+        }
+
         emailInput.addEventListener('paste', (event) => {
             const pastedText = event.clipboardData?.getData('text/plain').trim();
-            const separatorIndex = pastedText?.indexOf(':') ?? -1;
 
-            if (separatorIndex <= 0) return;
+            if (!pastedText || !fillCredentials(pastedText)) return;
 
             event.preventDefault();
-            emailInput.value = pastedText.slice(0, separatorIndex).trim();
-            passwordInput.value = pastedText.slice(separatorIndex + 1);
+        });
+
+        emailInput.addEventListener('keydown', (event) => {
+            if (event.key !== ':' || !emailInput.value.trim()) return;
+
+            event.preventDefault();
+            passwordInput.value = '';
+            passwordInput.focus();
         });
         const errorContainer = document.getElementById('errorContainer');
         const loadingContainer = document.getElementById('loadingContainer');
