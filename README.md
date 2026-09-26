@@ -1,16 +1,18 @@
 # Domain Mail 📧
 
-Веб-приложение для просмотра почты через IMAP с готическим дизайном.
+Веб-приложение для чтения почты через IMAP, отправки через SMTP и отложенной отправки.
 
-![Domain Mail](https://img.shields.io/badge/Node.js-18+-green) ![Express](https://img.shields.io/badge/Express-4.x-blue) ![License](https://img.shields.io/badge/license-MIT-purple)
+![Domain Mail](https://img.shields.io/badge/Node.js-20+-green) ![Express](https://img.shields.io/badge/Express-4.x-blue) ![License](https://img.shields.io/badge/license-MIT-purple)
 
 ## ✨ Возможности
 
 - 📬 Просмотр входящих писем через IMAP
 - 🔐 Авторизация по email и паролю
-- 📖 Открытие писем в модальном окне
+- 📖 Открытие писем в отдельном представлении
 - 🖼️ Поддержка HTML и текстовых писем
 - 📎 Отображение информации о вложениях
+- ✉️ Отправка писем и ответы через SMTP
+- 🕒 Отложенная отправка с отменой и просмотром статуса
 - 🎨 Готический дизайн интерфейса
 - 📱 Адаптивная вёрстка
 
@@ -47,7 +49,22 @@ PORT=3000
 IMAP_HOST=imap.beget.com
 IMAP_PORT=993
 IMAP_TLS=true
+SMTP_HOST=smtp.beget.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SCHEDULE_ENCRYPTION_KEY=<64 hex-символа>
 ```
+
+Для ключа очереди используйте `openssl rand -hex 32` и храните его неизменным
+между перезапусками. В Docker очередь хранится в томе `/data/scheduled.db`, а
+содержимое письма и пароль шифруются AES-256-GCM. Без ключа немедленная
+отправка работает, но планирование отключено. Если контейнер прервался во время
+SMTP-отправки, письмо получает статус «Проверьте отправку» и не отправляется
+повторно автоматически: сначала проверьте папку «Отправленные».
+
+Для другого почтового провайдера задайте его IMAP- и SMTP-хосты. Регистрация
+домена у Cloudflare не создаёт почтовые ящики: домен должен быть подключён к
+почтовому хостингу, а DNS должен содержать его MX, SPF, DKIM и DMARC записи.
 
 ### 4. Запустите сервер
 
@@ -93,7 +110,8 @@ IMAP_TLS=true
 
 ```
 domen_mail/
-├── server.js          # Express сервер с IMAP API
+├── server.js          # Express сервер с IMAP/SMTP API
+├── scheduled-mail.js  # Зашифрованная очередь
 ├── package.json       # Зависимости проекта
 ├── .env.example       # Пример настроек
 ├── public/
@@ -102,6 +120,12 @@ domen_mail/
 ```
 
 ## 🔧 API
+
+Новые маршруты: `POST /api/send` отправляет письмо сразу; `POST /api/scheduled`
+планирует отправку (поле `sendAt` в ISO 8601); `POST /api/scheduled/list`
+возвращает очередь ящика; `POST /api/scheduled/:id/cancel` отменяет ожидающее
+письмо. Все запросы принимают `email` и `password` в JSON-теле; настройки SMTP
+задаются только на сервере. Вложения в исходящих письмах пока не поддерживаются.
 
 ### POST /api/messages
 Получить список писем (до 100 последних)
@@ -158,10 +182,10 @@ domen_mail/
 
 ## 🛡️ Безопасность
 
-- Пароли не хранятся на сервере
+- Пароли для обычного чтения и немедленной отправки не сохраняются. Для отложенных писем пароль хранится в зашифрованном виде до обработки записи
 - Учётные данные передаются через POST запросы
 - HTML содержимое писем санитизируется
-- TLS/SSL соединение с IMAP сервером
+- TLS/SSL соединение с IMAP и SMTP с проверкой сертификата
 
 ## 🌐 Развертывание на сервере
 
@@ -176,7 +200,7 @@ ssh root@your-server-ip
 
 #### 2. Установите Node.js
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 

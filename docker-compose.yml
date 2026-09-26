@@ -10,10 +10,21 @@ services:
     # Порт снаружи хоста — 3003 (3002 занят первым сервисом)
     # Если нужно изменить — поменяй первое число
     ports:
-      - "3003:3000"          # ← Изменили на 3003
+      - "127.0.0.1:3003:3000"
 
     environment:
       PORT: "3000"
       IMAP_HOST: ${IMAP_HOST:-imap.beget.com}
       IMAP_PORT: ${IMAP_PORT:-993}
       IMAP_TLS: ${IMAP_TLS:-true}
+      SMTP_HOST: ${SMTP_HOST:-smtp.beget.com}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SCHEDULE_ENCRYPTION_KEY: ${SCHEDULE_ENCRYPTION_KEY:-}
+      SCHEDULE_DB_PATH: /data/scheduled.db
+
+    volumes:
+      - domen-mail-data:/data
+
+volumes:
+  domen-mail-data:
