@@ -47,6 +47,23 @@
             </aside>
 
             <main class="content-area">
+                <section class="credential-strip" aria-label="Данные доступа">
+                    <div class="credential-heading">
+                        <span class="eyebrow">ДАННЫЕ ДОСТУПА</span>
+                        <strong>Этот ящик подключён</strong>
+                    </div>
+                    <div class="credential-values">
+                        <div class="credential-item">
+                            <span class="credential-label">Email</span>
+                            <div class="credential-value"><code id="credentialEmail"></code><button type="button" class="icon-button credential-copy" data-copy="email" title="Скопировать email" aria-label="Скопировать email"><i class="bi bi-copy"></i></button></div>
+                        </div>
+                        <div class="credential-item">
+                            <span class="credential-label">Пароль</span>
+                            <div class="credential-value"><code id="credentialPassword"></code><button type="button" class="icon-button credential-copy" data-copy="password" title="Скопировать пароль" aria-label="Скопировать пароль"><i class="bi bi-copy"></i></button></div>
+                        </div>
+                    </div>
+                </section>
+
                 <section id="inboxView" class="view">
                     <div class="view-heading"><div><span class="eyebrow">ПОЧТОВЫЙ ЯЩИК</span><h1>Входящие</h1></div><button id="composeShortcut" type="button" class="button button-primary"><i class="bi bi-pencil-square"></i> Написать</button></div>
                     <div class="toolbar"><div class="search-field"><i class="bi bi-search"></i><input id="messageSearch" type="search" placeholder="Поиск по письмам" aria-label="Поиск по письмам"></div><button id="refreshButton" type="button" class="icon-button" title="Обновить письма" aria-label="Обновить письма"><i class="bi bi-arrow-clockwise"></i></button><span id="messageCount" class="toolbar-count"></span></div>

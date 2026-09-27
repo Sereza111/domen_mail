@@ -79,8 +79,11 @@ async function loadMessages() {
         $('loginView').hidden = true;
         $('workspace').hidden = false;
         $('accountEmail').textContent = currentEmail;
+        $('credentialEmail').textContent = currentEmail;
+        $('credentialPassword').textContent = currentPassword;
         $('connectionStatus').classList.add('connected');
         $('connectionStatus').querySelector('span').textContent = 'Подключено';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         renderMessages();
     } catch (error) {
         toast(error.message, true);
@@ -153,6 +156,8 @@ function logout() {
     openedMessage = null;
     $('emailInput').value = '';
     $('passwordInput').value = '';
+    $('credentialEmail').textContent = '';
+    $('credentialPassword').textContent = '';
     $('composeForm').reset();
     $('messageList').textContent = '';
     $('detailContent').textContent = '';
@@ -206,6 +211,17 @@ for (const item of document.querySelectorAll('.nav-item')) {
     item.addEventListener('click', () => setView(item.dataset.view));
 }
 $('logoutButton').addEventListener('click', logout);
+document.querySelectorAll('.credential-copy').forEach(button => {
+    button.addEventListener('click', async () => {
+        const value = button.dataset.copy === 'password' ? currentPassword : currentEmail;
+        try {
+            await navigator.clipboard.writeText(value);
+            toast(button.dataset.copy === 'password' ? 'Пароль скопирован' : 'Email скопирован');
+        } catch {
+            toast('Не удалось скопировать данные', true);
+        }
+    });
+});
 $('composeShortcut').addEventListener('click', () => setView('compose'));
 $('refreshButton').addEventListener('click', loadMessages);
 $('messageSearch').addEventListener('input', renderMessages);
