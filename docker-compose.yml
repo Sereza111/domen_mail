@@ -7,6 +7,9 @@ services:
     container_name: domen-mail
     restart: unless-stopped
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     # Порт снаружи хоста — 3003 (3002 занят первым сервисом)
     # Если нужно изменить — поменяй первое число
     ports:
@@ -22,6 +25,8 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-true}
       SCHEDULE_ENCRYPTION_KEY: ${SCHEDULE_ENCRYPTION_KEY:-}
       SCHEDULE_DB_PATH: /data/scheduled.db
+      GENERATOR_ACTIVITY_URL: ${GENERATOR_ACTIVITY_URL:-http://host.docker.internal:3002/api/mailbox-activity}
+      GENERATOR_ACTIVITY_TOKEN: ${GENERATOR_ACTIVITY_TOKEN:-}
 
     volumes:
       - domen-mail-data:/data

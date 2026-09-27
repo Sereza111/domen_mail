@@ -16,6 +16,8 @@ const IMAP_TLS = process.env.IMAP_TLS !== 'false';
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.beget.com';
 const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
 const SMTP_SECURE = process.env.SMTP_SECURE !== 'false';
+const GENERATOR_ACTIVITY_URL = process.env.GENERATOR_ACTIVITY_URL || '';
+const GENERATOR_ACTIVITY_TOKEN = process.env.GENERATOR_ACTIVITY_TOKEN || '';
 const scheduled = process.env.SCHEDULE_ENCRYPTION_KEY
     ? createScheduledMail({
         filename: process.env.SCHEDULE_DB_PATH || path.join(__dirname, 'scheduled.db'),
@@ -42,6 +44,32 @@ function credentials(body) {
         return null;
     }
     return { email, password };
+}
+
+function classifyMailError(error) {
+    const details = [error?.code, error?.textCode, error?.message].filter(Boolean).join(' ').toUpperCase();
+    if (/AUTHENTICATIONFAILED|AUTHENTICATION|INVALID CREDENTIAL|BAD LOGIN|LOGIN FAILED|\bLOGIN\b/.test(details)) {
+        return { status: 401, message: 'Неверный email или пароль' };
+    }
+    if (/ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ECONNRESET|CERT|TLS|SOCKET|TIMED OUT|NETWORK/.test(details)) {
+        return { status: 502, message: 'Не удалось подключиться к почтовому серверу' };
+    }
+    return { status: 502, message: 'Почтовый сервер вернул ошибку' };
+}
+
+function recordMailboxActivity(email) {
+    if (!GENERATOR_ACTIVITY_URL || !GENERATOR_ACTIVITY_TOKEN) return Promise.resolve();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    return fetch(GENERATOR_ACTIVITY_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Activity-Token': GENERATOR_ACTIVITY_TOKEN
+        },
+        body: JSON.stringify({ email }),
+        signal: controller.signal
+    }).then(() => undefined).catch(() => undefined).finally(() => clearTimeout(timeout));
 }
 
 function recipients(value) {
@@ -169,6 +197,7 @@ app.post('/api/scheduled/list', async (req, res) => {
     if (!auth) return res.status(400).json({ error: 'Введите корректный email и пароль' });
     try {
         await verifyMailbox(auth.email, auth.password);
+        recordMailboxActivity(auth.email);
         res.json({ messages: scheduled.list(auth.email) });
     } catch (error) {
         res.status(401).json({ error: 'Не удалось подтвердить доступ к ящику' });
@@ -181,6 +210,7 @@ app.post('/api/scheduled/:id/cancel', async (req, res) => {
     if (!auth) return res.status(400).json({ error: 'Введите корректный email и пароль' });
     try {
         await verifyMailbox(auth.email, auth.password);
+        recordMailboxActivity(auth.email);
         if (!scheduled.cancel(auth.email, req.params.id)) {
             return res.status(409).json({ error: 'Письмо уже отправляется или не найдено' });
         }
@@ -192,54 +222,26 @@ app.post('/api/scheduled/:id/cancel', async (req, res) => {
 
 // API endpoint to get messages list (POST for security - password in body)
 app.post('/api/messages', async (req, res) => {
-    const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-        return res.status(400).json({ 
-            error: 'Email и пароль обязательны' 
-        });
-    }
-
-    // Validate email format
-    if (!email.includes('@') || !email.includes('.')) {
-        return res.status(400).json({ 
-            error: 'Введите корректный email адрес' 
-        });
-    }
+    const auth = credentials(req.body);
+    if (!auth) return res.status(400).json({ error: 'Введите корректный email и пароль' });
 
     try {
-        const messages = await fetchMessages(email, password);
+        const messages = await fetchMessages(auth.email, auth.password);
+        recordMailboxActivity(auth.email);
         res.json({ messages });
     } catch (error) {
         console.error('IMAP Error:', error.message);
-        
-        // User-friendly error messages
-        let errorMessage = 'Ошибка при получении сообщений';
-        if (error.message.includes('Invalid credentials') || 
-            error.message.includes('Authentication failed') ||
-            error.message.includes('LOGIN')) {
-            errorMessage = 'Неверный email или пароль';
-        } else if (error.message.includes('ECONNREFUSED') || 
-                   error.message.includes('ETIMEDOUT')) {
-            errorMessage = 'Не удалось подключиться к почтовому серверу';
-        }
-        
-        res.status(401).json({ error: errorMessage });
+        const classified = classifyMailError(error);
+        res.status(classified.status).json({ error: classified.message });
     }
 });
 
 // API endpoint to get single message content
 app.post('/api/message/:seqno', async (req, res) => {
-    const { email, password } = req.body;
+    const auth = credentials(req.body);
     const seqno = parseInt(req.params.seqno);
 
-    // Validate input
-    if (!email || !password) {
-        return res.status(400).json({ 
-            error: 'Email и пароль обязательны' 
-        });
-    }
+    if (!auth) return res.status(400).json({ error: 'Введите корректный email и пароль' });
 
     if (!seqno || isNaN(seqno)) {
         return res.status(400).json({ 
@@ -248,11 +250,13 @@ app.post('/api/message/:seqno', async (req, res) => {
     }
 
     try {
-        const message = await fetchSingleMessage(email, password, seqno);
+        const message = await fetchSingleMessage(auth.email, auth.password, seqno);
+        recordMailboxActivity(auth.email);
         res.json({ message });
     } catch (error) {
         console.error('IMAP Error:', error.message);
-        res.status(500).json({ error: 'Ошибка при получении сообщения' });
+        const classified = classifyMailError(error);
+        res.status(classified.status).json({ error: classified.message });
     }
 });
 
