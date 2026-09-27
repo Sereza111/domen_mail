@@ -18,6 +18,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { min-width: 320px; background: var(--ink); }
 body { min-height: 100vh; margin: 0; overflow-x: hidden; color: var(--text); background: var(--ink); font: 14px/1.5 "Segoe UI", Inter, Arial, sans-serif; }
 body::before { position: fixed; inset: 0; z-index: -1; pointer-events: none; content: ""; opacity: .42; background-image: linear-gradient(rgba(183, 209, 213, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(183, 209, 213, .035) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(to bottom, black, transparent 84%); }
