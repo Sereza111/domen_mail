@@ -83,7 +83,7 @@ async function loadMessages() {
         $('credentialPassword').textContent = currentPassword;
         $('connectionStatus').classList.add('connected');
         $('connectionStatus').querySelector('span').textContent = 'Подключено';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0, 0);
         renderMessages();
     } catch (error) {
         toast(error.message, true);
@@ -215,7 +215,18 @@ document.querySelectorAll('.credential-copy').forEach(button => {
     button.addEventListener('click', async () => {
         const value = button.dataset.copy === 'password' ? currentPassword : currentEmail;
         try {
-            await navigator.clipboard.writeText(value);
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(value);
+            } else {
+                const helper = document.createElement('textarea');
+                helper.value = value;
+                helper.style.position = 'fixed';
+                helper.style.opacity = '0';
+                document.body.appendChild(helper);
+                helper.select();
+                document.execCommand('copy');
+                helper.remove();
+            }
             toast(button.dataset.copy === 'password' ? 'Пароль скопирован' : 'Email скопирован');
         } catch {
             toast('Не удалось скопировать данные', true);
